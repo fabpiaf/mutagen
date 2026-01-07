@@ -60,14 +60,17 @@ class ID3OptionParser(OptionParser):
 
 
 def update(options, filenames):
-    encoding = options.encoding or getpreferredencoding()
+    encoding = options.toencoding or getpreferredencoding()
+    fromencoding = options.fromencoding
     verbose = options.verbose
     noupdate = options.noupdate
     force_v1 = options.force_v1
     remove_v1 = options.remove_v1
 
     def conv(uni):
-        return uni.encode('iso-8859-1').decode(encoding)
+        if isascii(uni):
+            return uni
+        return uni.encode(fromencoding).decode(encoding)
 
     for filename in filenames:
         with _sig.block():
@@ -129,10 +132,15 @@ def has_id3v1(filename):
 def main(argv):
     parser = ID3OptionParser()
     parser.add_option(
-        "-e", "--encoding", metavar="ENCODING", action="store",
-        type="string", dest="encoding",
-        help=("Specify original tag encoding (default is %s)" % (
+        "-e", "--to-encoding", metavar="ENCODING", action="store",
+        type="string", dest="toencoding",
+        help=("Specify output tag encoding (default is %s)" % (
               getpreferredencoding())))
+    parser.add_option(
+        "-f", "--from-encoding", metavar="ENCODING", action="store",
+        type="string", dest="fromencoding", default='iso-8859-1',
+        help=("Specify input tag encoding (default is iso-8859-1)")
+        )
     parser.add_option(
         "-p", "--dry-run", action="store_true", dest="noupdate",
         help="Do not actually modify files")
